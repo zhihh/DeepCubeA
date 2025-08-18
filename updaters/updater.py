@@ -47,9 +47,9 @@ def astar_update(states: List[State], env: Environment, num_steps: int, heuristi
         node.compute_bellman()
 
     states_update: List[State] = [node.state for node in nodes_popped_flat]
-    cost_to_go_update: np.array = np.array([node.bellman for node in nodes_popped_flat])
+    cost_to_go_update: np.ndarray = np.array([node.bellman for node in nodes_popped_flat])
 
-    is_solved: np.array = np.array(astar.has_found_goal())
+    is_solved: np.ndarray = np.array(astar.has_found_goal())
 
     return states_update, cost_to_go_update, is_solved
 
@@ -72,7 +72,7 @@ def update_runner(num_states: int, back_max: int, update_batch_size: int, heur_f
         else:
             raise ValueError("Unknown update method %s" % update_method)
 
-        states_update_nnet: List[np.ndaray] = env.state_to_nnet_input(states_update)
+        states_update_nnet: List[np.ndarray] = env.state_to_nnet_input(states_update)
 
         result_queue.put((states_update_nnet, cost_to_go_update, is_solved))
 
@@ -90,7 +90,7 @@ class Updater:
         num_procs = len(heur_fn_o_qs)
 
         # initialize queues
-        self.result_queue: ctx.Queue = ctx.Queue()
+        self.result_queue = ctx.Queue()
 
         # num states per process
         num_states_per_proc: List[int] = misc_utils.split_evenly(num_states, num_procs)
@@ -98,7 +98,7 @@ class Updater:
         self.num_batches: int = int(np.ceil(np.array(num_states_per_proc)/update_batch_size).sum())
 
         # initialize processes
-        self.procs: List[ctx.Process] = []
+        self.procs = []
         for proc_id in range(len(heur_fn_o_qs)):
             num_states_proc: int = num_states_per_proc[proc_id]
             if num_states_proc == 0:
@@ -129,7 +129,7 @@ class Updater:
 
         none_count: int = 0
         result_count: int = 0
-        display_counts: List[int] = list(np.linspace(1, self.num_batches, 10, dtype=np.int))
+        display_counts: List[int] = list(np.linspace(1, self.num_batches, 10, dtype=np.int32))
 
         start_time = time.time()
 

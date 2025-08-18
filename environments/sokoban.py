@@ -81,7 +81,7 @@ class Sokoban(Environment):
 
         idxs_arange = np.arange(0, len(states))
         agent_next_tmp = self._get_next_idx(agent, action)
-        agent_next = np.zeros(agent_next_tmp.shape, dtype=np.int)
+        agent_next = np.zeros(agent_next_tmp.shape, dtype=np.int32)
 
         boxes_next = boxes.copy()
 
@@ -127,7 +127,7 @@ class Sokoban(Environment):
         return states_next, transition_costs
 
     def state_to_nnet_input(self, states: List[SokobanState]):
-        agent_mat: np.ndarray = np.zeros((len(states), self.dim, self.dim), dtype=np.bool)
+        agent_mat: np.ndarray = np.zeros((len(states), self.dim, self.dim), dtype=bool)
         for idx, state in enumerate(states):
             agent_mat[idx, state.agent[0], state.agent[1]] = True
 
@@ -152,7 +152,7 @@ class Sokoban(Environment):
         return np.all(boxes == goals, axis=(1, 2))
 
     def get_render_array(self, state: SokobanState) -> np.ndarray:
-        state_rendered = np.ones((self.dim, self.dim), dtype=np.int)
+        state_rendered = np.ones((self.dim, self.dim), dtype=np.int32)
         state_rendered -= state.walls
         state_rendered[state.agent[0], state.agent[1]] = 2
         state_rendered += state.boxes * 2
@@ -232,7 +232,7 @@ class Sokoban(Environment):
         states: List[SokobanState] = []
 
         for idx in range(self.agent_train_idxs[0].shape[0]):
-            agent_idx = np.array([self.agent_train_idxs[1][idx], self.agent_train_idxs[2][idx]], dtype=np.int)
+            agent_idx = np.array([self.agent_train_idxs[1][idx], self.agent_train_idxs[2][idx]], dtype=np.int32)
 
             states.append(SokobanState(agent_idx, self.box_train_masks[idx], self.wall_train_masks[idx],
                                        self.goal_train_masks[idx]))

@@ -347,7 +347,12 @@ def main():
     parser.add_argument('--model_dir', type=str, required=True, help="Directory of nnet model")
     parser.add_argument('--env', type=str, required=True, help="Environment: cube3, 15-puzzle, 24-puzzle")
     parser.add_argument('--batch_size', type=int, default=1, help="Batch size for BWAS")
+    # Batch Weighted A* Search
     parser.add_argument('--weight', type=float, default=1.0, help="Weight of path cost")
+    # weight：
+    # weight = 1 -> 标准 A*（f = g + h）。
+    # weight > 1 -> 增大 g 的权重，算法更偏向“优先保持低路径代价”（相对减少启发式影响）；
+    # weight < 1 -> 增大启发式相对影响，算法更“贪心”向启发式指示的方向走（更快但可能次优）。
     parser.add_argument('--language', type=str, default="python", help="python or cpp")
 
     parser.add_argument('--results_dir', type=str, required=True, help="Directory to save results")

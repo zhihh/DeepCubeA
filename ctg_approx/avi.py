@@ -33,6 +33,9 @@ def parse_arguments(parser: ArgumentParser) -> Dict[str, Any]:
 
     # Training
     parser.add_argument('--max_itrs', type=int, default=1000000, help="Maxmimum number of iterations")
+    ## Train一次计数: num_train_itrs = epochs_per_update * ceil( outputs.shape[0] / batch_size ), outputs.shape[0]≈states per update
+    ## 累积计数: itr += num_train_itrs
+    ## 计数限制: itr <= max_it
     parser.add_argument('--batch_size', type=int, default=1000, help="Batch size")
     parser.add_argument('--single_gpu_training', action='store_true',
                         default=False, help="If set, train only on one GPU. Update step will still use "
@@ -56,6 +59,7 @@ def parse_arguments(parser: ArgumentParser) -> Dict[str, Any]:
                                                                                   "each process update. "
                                                                                   "Make smaller if running out of "
                                                                                   "memory.")
+    ## 在状态空间中的某个起点开始可以向终点探索的最大步数
     parser.add_argument('--max_update_steps', type=int, default=1, help="Number of steps to take when trying to "
                                                                         "solve training states with "
                                                                         "greedy best-first search (GBFS) or A* search. "
@@ -83,6 +87,7 @@ def parse_arguments(parser: ArgumentParser) -> Dict[str, Any]:
 
     # data
     parser.add_argument('--back_max', type=int, required=True, help="Maximum number of backwards steps from goal")
+    ## 从目标重点开始后向随机游走的最大步数，决定了用于训练的状态空间的大小。
 
     # model
     parser.add_argument('--nnet_name', type=str, required=True, help="Name of neural network")

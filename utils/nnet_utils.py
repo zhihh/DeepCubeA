@@ -21,7 +21,10 @@ import time
 def states_nnet_to_pytorch_input(states_nnet: List[np.ndarray], device) -> List[Tensor]:
     states_nnet_tensors = []
     for tensor_np in states_nnet:
-        tensor = torch.tensor(tensor_np, device=device)
+        # 确保数据类型兼容性
+        if tensor_np.dtype == np.object_:
+            tensor_np = tensor_np.astype(np.float32)
+        tensor = torch.tensor(tensor_np, device=device, dtype=torch.float32)
         states_nnet_tensors.append(tensor)
 
     return states_nnet_tensors
@@ -131,17 +134,17 @@ def get_device() -> Tuple[torch.device, List[int], bool]:
 
 
 # loading nnet
-def load_nnet(model_file: str, nnet: nn.Module, device: torch.device = None) -> nn.Module:
+def load_nnet(model_file: str, nnet: nn.Module, device: Optional[torch.device] = None) -> nn.Module:
     # get state dict
     if device is None:
-        state_dict = torch.load(model_file)
+        state_dict = torch.load(model_file, weights_only=True)
     else:
-        state_dict = torch.load(model_file, map_location=device)
+        state_dict = torch.load(model_file, map_location=device, weights_only=True)
 
     # remove module prefix
     new_state_dict = OrderedDict()
     for k, v in state_dict.items():
-        k = re.sub('^module\.', '', k)
+        k = re.sub(r'^module\.', '', k)
         new_state_dict[k] = v
 
     # set state dict
@@ -238,7 +241,12 @@ def heuristic_fn_par(states: List[State], env: Environment, heur_fn_i_q, heur_fn
     for idx in parallel_nums:
         results[idx] = heur_fn_o_qs[idx].get()
 
-    results = np.concatenate(results, axis=0)
+    # 过滤None值并合并结果
+    valid_results = [r for r in results if r is not None]
+    if valid_results:
+        results = np.concatenate(valid_results, axis=0)
+    else:
+        results = np.array([])
 
     return results
 
@@ -269,9 +277,12 @@ def heuristic_fn_runner(heuristic_fn_input_queue: Queue, heuristic_fn_output_que
             break
 
         if all_zeros:
-            heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float)
+            heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float32)
         else:
-            heuristics = heuristic_fn(states_nnet, is_nnet_format=True)
+            if heuristic_fn is not None:
+                heuristics = heuristic_fn(states_nnet, is_nnet_format=True)
+            else:
+                heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float32)
 
         heuristic_fn_output_queues[proc_id].put(heuristics)
 
@@ -282,16 +293,16 @@ def start_heur_fn_runners(num_procs: int, nnet_dir: str, device, on_gpu: bool, e
                           all_zeros: bool = False, clip_zero: bool = False, batch_size: Optional[int] = None):
     ctx = get_context("spawn")
 
-    heuristic_fn_input_queue: ctx.Queue = ctx.Queue()
-    heuristic_fn_output_queues: List[ctx.Queue] = []
+    heuristic_fn_input_queue = ctx.Queue()
+    heuristic_fn_output_queues = []
     for _ in range(num_procs):
-        heuristic_fn_output_queue: ctx.Queue = ctx.Queue(1)
+        heuristic_fn_output_queue = ctx.Queue(1)
         heuristic_fn_output_queues.append(heuristic_fn_output_queue)
 
     # initialize heuristic procs
     gpu_nums = get_available_gpu_nums() or [-1]
 
-    heur_procs: List[ctx.Process] = []
+    heur_procs = []
     for gpu_num in gpu_nums:
         heur_proc = ctx.Process(target=heuristic_fn_runner,
                                 args=(heuristic_fn_input_queue, heuristic_fn_output_queues,

@@ -17,7 +17,8 @@ class State(ABC):
 
 class Environment(ABC):
     def __init__(self):
-        self.dtype = np.float
+        # self.dtype = np.float
+        self.dtype = np.float32
         self.fixed_actions: bool = True
 
     @abstractmethod
