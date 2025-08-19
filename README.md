@@ -10,12 +10,12 @@
 
 ```bash
 # 1. 设置环境
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0[,1,2,3]
 source setup.sh
 
 # 2. 快速训练测试
 
-python ctg_approx/avi.py --env puzzle15 --states_per_update 500000 --batch_size 100 --nnet_name puzzle15_test --max_itrs 20000 --loss_thresh 0.1 --back_max 50 --num_update_procs 3
+python ctg_approx/avi.py --env puzzle15 --states_per_update 500000 --batch_size 100 --nnet_name puzzle15_test --max_itrs 20000 --loss_thresh 0.1 --back_max 50 --num_update_procs 3                           
 ## 若训练不走了，提升 max_itrs
 
 # 3. A*搜索测试 (30秒)  
@@ -137,6 +137,10 @@ make
 
 # 本仓库已经编译好了
 ```
+
+### :tada: 复现的一些记录
+
+参考 [Reproduce.md](./Reproduce/Reproduce.md)
 
 ## 🏆 贡献者
 
